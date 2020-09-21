@@ -225,6 +225,7 @@ func (s *Asterisk) Gather(acc telegraf.Accumulator) error {
 	uptimeResults := strings.Split(uptimeResult, "\n")
 
 	systemUptime := 0
+	systemUptimeYears := 0
 	systemUptimeWeeks := 0
 	systemUptimeDays := 0
 	systemUptimeHours := 0
@@ -232,52 +233,97 @@ func (s *Asterisk) Gather(acc telegraf.Accumulator) error {
 	systemUptimeSeconds := 0
 
 	asteriskLastReload := 0
+	asteriskLastReloadYears := 0
 	asteriskLastReloadWeeks := 0
 	asteriskLastReloadDays := 0
 	asteriskLastReloadHours := 0
 	asteriskLastReloadMinutes := 0
 	asteriskLastReloadSeconds := 0
 
+	re := regexp.MustCompile(``)
+
 	for _, uptimeItem := range uptimeResults {
 		if strings.Contains(uptimeItem, "System uptime") {
-			re := regexp.MustCompile(`([0-9]+) day`)
+
+			re = regexp.MustCompile(`([0-9]+) year`)
+			systemYears := re.FindAllStringSubmatch(uptimeItem, -1)
+			if len(systemYears) > 0 {
+				systemUptimeYears, _ = strconv.Atoi(systemYears[0][1])
+			}
+
+			re = regexp.MustCompile(`([0-9]+) week`)
+			systemWeeks := re.FindAllStringSubmatch(uptimeItem, -1)
+			if len(systemWeeks) > 0 {
+				systemUptimeWeeks, _ = strconv.Atoi(systemWeeks[0][1])
+			}
+
+			re = regexp.MustCompile(`([0-9]+) day`)
 			systemDays := re.FindAllStringSubmatch(uptimeItem, -1)
-			systemUptimeDays, _ = strconv.Atoi(systemDays[0][1])
+			if len(systemDays) > 0 {
+				systemUptimeDays, _ = strconv.Atoi(systemDays[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) hour`)
 			systemHours := re.FindAllStringSubmatch(uptimeItem, -1)
-			systemUptimeHours, _ = strconv.Atoi(systemHours[0][1])
+			if len(systemHours) > 0 {
+				systemUptimeHours, _ = strconv.Atoi(systemHours[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) minute`)
 			systemMinutes := re.FindAllStringSubmatch(uptimeItem, -1)
-			systemUptimeMinutes, _ = strconv.Atoi(systemMinutes[0][1])
+			if len(systemMinutes) > 0 {
+				systemUptimeMinutes, _ = strconv.Atoi(systemMinutes[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) second`)
 			systemSeconds := re.FindAllStringSubmatch(uptimeItem, -1)
-			systemUptimeSeconds, _ = strconv.Atoi(systemSeconds[0][1])
+			if len(systemSeconds) > 0 {
+				systemUptimeSeconds, _ = strconv.Atoi(systemSeconds[0][1])
+			}
 		}
 		if strings.Contains(uptimeItem, "Last reload") {
-			re := regexp.MustCompile(`([0-9]+) day`)
+
+			re = regexp.MustCompile(`([0-9]+) year`)
+			reloadYears := re.FindAllStringSubmatch(uptimeItem, -1)
+			if len(reloadYears) > 0 {
+				asteriskLastReloadYears, _ = strconv.Atoi(reloadYears[0][1])
+			}
+
+			re = regexp.MustCompile(`([0-9]+) week`)
+			reloadWeeks := re.FindAllStringSubmatch(uptimeItem, -1)
+			if len(reloadWeeks) > 0 {
+				asteriskLastReloadWeeks, _ = strconv.Atoi(reloadWeeks[0][1])
+			}
+
+			re = regexp.MustCompile(`([0-9]+) day`)
 			reloadDays := re.FindAllStringSubmatch(uptimeItem, -1)
-			asteriskLastReloadDays, _ = strconv.Atoi(reloadDays[0][1])
+			if len(reloadDays) > 0 {
+				asteriskLastReloadDays, _ = strconv.Atoi(reloadDays[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) hour`)
 			reloadHours := re.FindAllStringSubmatch(uptimeItem, -1)
-			asteriskLastReloadHours, _ = strconv.Atoi(reloadHours[0][1])
+			if len(reloadHours) > 0 {
+				asteriskLastReloadHours, _ = strconv.Atoi(reloadHours[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) minute`)
 			reloadMinutes := re.FindAllStringSubmatch(uptimeItem, -1)
-			asteriskLastReloadMinutes, _ = strconv.Atoi(reloadMinutes[0][1])
+			if len(reloadMinutes) > 0 {
+				asteriskLastReloadMinutes, _ = strconv.Atoi(reloadMinutes[0][1])
+			}
 
 			re = regexp.MustCompile(`([0-9]+) second`)
 			reloadSeconds := re.FindAllStringSubmatch(uptimeItem, -1)
-			asteriskLastReloadSeconds, _ = strconv.Atoi(reloadSeconds[0][1])
+			if len(reloadSeconds) > 0 {
+				asteriskLastReloadSeconds, _ = strconv.Atoi(reloadSeconds[0][1])
+			}
 		}
 	}
 
-	systemUptime = (systemUptimeWeeks * 604800) + (systemUptimeDays * 86400) + (systemUptimeHours * 3600) + (systemUptimeMinutes * 60) + systemUptimeSeconds
+	systemUptime = (systemUptimeYears * 31104000) + (systemUptimeWeeks * 604800) + (systemUptimeDays * 86400) + (systemUptimeHours * 3600) + (systemUptimeMinutes * 60) + systemUptimeSeconds
 
-	asteriskLastReload = (asteriskLastReloadWeeks * 604800) + (asteriskLastReloadDays * 86400) + (asteriskLastReloadHours * 3600) + (asteriskLastReloadMinutes * 60) + asteriskLastReloadSeconds
+	asteriskLastReload = (asteriskLastReloadYears * 31104000) + (asteriskLastReloadWeeks * 604800) + (asteriskLastReloadDays * 86400) + (asteriskLastReloadHours * 3600) + (asteriskLastReloadMinutes * 60) + asteriskLastReloadSeconds
 
 	//MFCR2 Channels
 	mfcr2Result := command("mfcr2 show channels", s)

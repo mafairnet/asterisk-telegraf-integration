@@ -21,14 +21,15 @@ Usage
 -----------
 1. Get Telegraf Agent binary with Asterisk Input Plugin added.
 ```
-wget https://raw.githubusercontent.com/mafairnet/asterisk-telegraf-integration/master.zip
+wget https://raw.githubusercontent.com/mafairnet/asterisk-telegraf-integration/archive/master.zip
 ```
 2. Uncompress File
 ```
-tar -xvf master.zip
+tar -xvf asterisk-telegraf-integration-master.zip
 ```
 3. Set write permissions to binary
 ```
+cd asterisk-telegraf-integration-master
 chmod +x telegraf
 ```
 4. Edit telegraf Agent Configuration
