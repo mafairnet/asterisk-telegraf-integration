@@ -341,15 +341,46 @@ func (s *Asterisk) Gather(acc telegraf.Accumulator) error {
 		for _, mfcr2Item := range mfcr2Results {
 			if strings.Contains(mfcr2Item, "IDLE") {
 				mfcr2TotalChannels = mfcr2TotalChannels + 1
-				mfcr2InuseChannels = mfcr2InuseChannels + 1
+				mfcr2AvailableChannels = mfcr2AvailableChannels + 1
 			}
 			if strings.Contains(mfcr2Item, "ANSWER") {
 				mfcr2TotalChannels = mfcr2TotalChannels + 1
-				mfcr2AvailableChannels = mfcr2AvailableChannels + 1
+				mfcr2InuseChannels = mfcr2InuseChannels + 1
 			}
 			if strings.Contains(mfcr2Item, "BLOCK") {
 				mfcr2TotalChannels = mfcr2TotalChannels + 1
 				mfcr2BlockedChannels = mfcr2BlockedChannels + 1
+			}
+		}
+	}
+
+	//PJSIP Endpoints Channels
+	pjsipResult := command("pjsip list endpoints", s)
+
+	pjsipResult = strings.Replace(pjsipResult, "\r\n", "\n", -1)
+	pjsipResults := strings.Split(pjsipResult, "\n")
+
+	pjsipTotalDevices := 0
+	pjsipInuseDevices := 0
+	pjsipNotInUseDevices := 0
+	pjsipUnavailableDevices := 0
+
+	if !strings.Contains(mfcr2Result, "No such command") {
+
+		for _, pjsipItem := range pjsipResults {
+			if strings.Contains(pjsipItem, "Endpoint") {
+				if strings.Contains(pjsipItem, "Unavailable") {
+					pjsipTotalDevices = pjsipTotalDevices + 1
+					pjsipUnavailableDevices = pjsipUnavailableDevices + 1
+				}
+				if strings.Contains(pjsipItem, "Not in use") {
+					pjsipTotalDevices = pjsipTotalDevices + 1
+					pjsipNotInUseDevices = pjsipNotInUseDevices + 1
+				}
+				if strings.Contains(pjsipItem, "In use") {
+					pjsipTotalDevices = pjsipTotalDevices + 1
+					pjsipInuseDevices = pjsipInuseDevices + 1
+				}
 			}
 		}
 	}
@@ -379,15 +410,18 @@ func (s *Asterisk) Gather(acc telegraf.Accumulator) error {
 	fields["mfcr2_channels_in_use"] = mfcr2InuseChannels
 	fields["mfcr2_channels_available"] = mfcr2AvailableChannels
 	fields["mfcr2_channels_blocked"] = mfcr2BlockedChannels
+	fields["pjsip_devices_total"] = pjsipTotalDevices
+	fields["pjsip_devices_inuse"] = pjsipInuseDevices
+	fields["pjsip_devices_notinuse"] = pjsipNotInUseDevices
+	fields["pjsip_devices_unavailable"] = pjsipUnavailableDevices
 
 	tags := make(map[string]string)
 
-	s.x += 1.0
 	acc.AddFields("asterisk", fields, tags)
 
 	return nil
 }
 
 func init() {
-	inputs.Add("asterisk", func() telegraf.Input { return &Asterisk{x: 0.0} })
+	inputs.Add("asterisk", func() telegraf.Input { return &Asterisk{} })
 }
